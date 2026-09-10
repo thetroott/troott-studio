@@ -1,0 +1,110 @@
+import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { Label } from '@troott/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@troott/ui/select';
+import { days, months, years } from '@/utils/helpers.util';
+import type { IDOBPicker } from '@/utils/interfaces.util';
+
+function parseInitial(iso?: string | null): {
+    year: string;
+    month: string;
+    day: string;
+} {
+    if (!iso || typeof iso !== 'string') {
+        return { year: '', month: '', day: '' };
+    }
+    const part = iso.split('T')[0] ?? '';
+    const [y, m, d] = part.split('-');
+    if (!y || !m || !d) return { year: '', month: '', day: '' };
+    return {
+        year: y,
+        month: m.padStart(2, '0'),
+        day: d.padStart(2, '0'),
+    };
+}
+
+export default function DateOfBirthPicker(data: IDOBPicker) {
+    const {
+        label = 'Date of Birth',
+        id,
+        className = '',
+        initialIsoDate,
+        onDateIsoChange,
+    } = data;
+    const init = parseInitial(initialIsoDate);
+    const [year, setYear] = useState(init.year);
+    const [month, setMonth] = useState(init.month);
+    const [day, setDay] = useState(init.day);
+
+    useEffect(() => {
+        const next = parseInitial(initialIsoDate);
+        setYear(next.year);
+        setMonth(next.month);
+        setDay(next.day);
+    }, [initialIsoDate]);
+
+    useEffect(() => {
+        if (!onDateIsoChange) return;
+        if (!year || !month || !day) {
+            onDateIsoChange(null);
+            return;
+        }
+        onDateIsoChange(`${year}-${month}-${day}`);
+    }, [year, month, day, onDateIsoChange]);
+
+    return (
+        <div className={cn('space-y-2', className)}>
+            {label && <Label htmlFor={id}>{label}</Label>}
+
+            <div className="flex gap-4">
+                {/* Year */}
+                <Select value={year} onValueChange={setYear}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px] overflow-y-auto">
+                        {years.map((yr) => (
+                            <SelectItem key={yr} value={yr}>
+                                {yr}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {/* Month */}
+                <Select value={month} onValueChange={setMonth}>
+                    <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map((m) => (
+                            <SelectItem key={m.value} value={m.value}>
+                                {m.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {/* Day */}
+                <Select value={day} onValueChange={setDay}>
+                    <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px] overflow-y-auto">
+                        {days.map((d) => (
+                            <SelectItem key={d} value={d}>
+                                {d}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    );
+}
